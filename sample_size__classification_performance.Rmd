@@ -1,5 +1,5 @@
 ---
-title: "sample_size_for_performance_assessment"
+title: "sample_size_classification_performance"
 author: "Wulcan"
 date: "2024-06-18"
 output: html_document
