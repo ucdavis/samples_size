@@ -1,0 +1,84 @@
+---
+title: "sample_size_for_performance_assessment"
+author: "Wulcan"
+date: "2024-06-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Objective
+To estimate sample size for studies of the sensitivity/specificity of a single test, 
+based on formula from Obuchowski_1998 (doi 10.1177/096228029800700405) 
+
+## Parameters
+- **confidence_interval_length**: The highest acceptable width of the confidence interval around
+the performance metric (I usually set this to 0.07, a lower value would give more precise
+estimates but larger samples)
+- **alpha** Type I error rate. 0.05 is a conventonal value.
+- **sensitivity_estimate**: Base this on expectations from previous studies. 
+A lower estimate will result in larger sample sizes. Express as fraction (e.g. 0.95)
+- **prevalence_estimate**: Base this on what you know of your sampling frame.
+A lower value, will result in a larger sample size. If the expected prevalence is above 
+0.5, this is not an appropriate function.
+
+
+## Output 
+This function will output a list consisting of two values.
+n_true will be the number of positive instances required, n_both the total sample size. 
+
+## Issues / Deviations / Comment 
+This function is only intended for instances where the prevalence is below 50%. If the 
+prevalence is higher than 50%, specificity will require a higher sample size than sensitivity.
+
+```{r, libraries & functions}
+#Function to calculate se/sp when prevalence is < 0.5 
+
+sample_size_performance_metrics_low_prevalence <- function(
+  confidence_interval_length,
+  alpha,
+  sensitivity_estimate,
+  prevalence_estimate
+) {
+  # z-value for a two-tailed alpha
+  z_alpha_two_tail <- abs(qnorm(alpha / 2, lower.tail = TRUE))
+  
+  # Variance of the sensitivity estimate (assuming binomial)
+  variance_sensitivity_estimate <- sensitivity_estimate * (1 - sensitivity_estimate)
+  
+  # Calculate the required number of true positives
+  n_true <- z_alpha_two_tail^2 * variance_sensitivity_estimate / (confidence_interval_length^2)
+  
+  # Calculate the required total sample size (true + false)
+  n_both <- n_true / prevalence_estimate
+  
+  # Return both quantities as a list (or named vector)
+  return(list(
+    n_true  = n_true,
+    n_both  = n_both
+  ))
+}
+
+```
+
+### LLM parsing of shunt suspicion
+#### Objective
+Test how well a LLM performs in parsing information on if a clinical history is compatible with shunt
+#### Parameter justification
+- Sensitivity estimate: 95%  based on previous study for GPT4-o parsing of information from vet medical records (Wulcan 2025)
+- Prevalence estimate: 50% (based on a stratified sampling of positive and negative cases)
+#### Results: 
+n_both = 74.5 (round up to 75)
+
+```{r}
+sample_size <- sample_size_performance_metrics_low_prevalence(
+  confidence_interval_length = 0.07, 
+  alpha = 0.05, 
+  sensitivity_estimate = 0.95,
+  prevalence_estimate = 0.5)
+
+print(sample_size$n_both)
+```
+
