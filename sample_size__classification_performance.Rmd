@@ -34,9 +34,9 @@ This function is only intended for instances where the prevalence is below 50%. 
 prevalence is higher than 50%, specificity will require a higher sample size than sensitivity.
 
 ```{r, libraries & functions}
-#Function to calculate se/sp when prevalence is < 0.5 
+#Function to calculate sample size for estimating se when prevalence is < 0.5 
 
-sample_size_performance_metrics_low_prevalence <- function(
+sample_size_se <- function(
   confidence_interval_length,
   alpha,
   sensitivity_estimate,
@@ -61,6 +61,34 @@ sample_size_performance_metrics_low_prevalence <- function(
   ))
 }
 
+#Function to calculate sample size for estimating sp when prevalence is > 0.5 
+sample_size_sp <- function(
+  confidence_interval_length,
+  alpha,
+  specificity_estimate,
+  prevalence_estimate
+) {
+  # z-value for a two-tailed alpha
+  z_alpha_two_tail <- abs(qnorm(alpha / 2, lower.tail = TRUE))
+  
+  # Variance of the sensitivity estimate (assuming binomial)
+  variance_specificity_estimate <- specificity_estimate * (1 - specificity_estimate)
+  
+  # Calculate the required number of true positives
+  n_true <- z_alpha_two_tail^2 * variance_specificity_estimate / (confidence_interval_length^2)
+  
+  # Calculate the required total sample size (true + false)
+  n_both <- n_true / (1-prevalence_estimate)
+  
+  # Return both quantities as a list (or named vector)
+  return(list(
+    n_true  = n_true,
+    n_both  = n_both
+  ))
+}
+
+
+
 ```
 
 ### LLM parsing of shunt suspicion
@@ -80,5 +108,47 @@ sample_size <- sample_size_performance_metrics_low_prevalence(
   prevalence_estimate = 0.5)
 
 print(sample_size$n_both)
+```
+
+
+### ROIS for layer validation
+Sensitivity - estimate 0.75for crypts (based on tuning set n=107)
+prevalence estimate 0.2 for crypts (based on tuning set n=107)
+
+```{r}
+#villi sensitivity
+sample_size <- sample_size_performance_metrics_low_prevalence(
+  confidence_interval_length = 0.07, 
+  alpha = 0.05, 
+  sensitivity_estimate = 0.85,
+  prevalence_estimate = 0.5)
+
+message("For Villi se:", sample_size$n_both)
+
+#crypts se
+sample_size <- sample_size_performance_metrics_low_prevalence(
+  confidence_interval_length = 0.07, 
+  alpha = 0.05, 
+  sensitivity_estimate = 0.75,
+  prevalence_estimate = 0.5)
+
+message("For Crypt se:", sample_size$n_both)
+
+
+sample_size <- sample_size_performance_metrics_high_prevalence(
+  confidence_interval_length = 0.07, 
+  alpha = 0.05, 
+  specificity_estimate = 0.9,
+  prevalence_estimate = 0.5)
+
+message("For Villi sp:", sample_size$n_both)
+
+sample_size <- sample_size_performance_metrics_high_prevalence(
+  confidence_interval_length = 0.07, 
+  alpha = 0.05, 
+  specificity_estimate = 0.95,
+  prevalence_estimate = 0.5)
+
+message("For Crypts sp:", sample_size$n_both)
 ```
 
