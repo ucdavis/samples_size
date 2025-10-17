@@ -152,5 +152,25 @@ sample_size <- sample_size_performance_metrics_high_prevalence(
 message("For Crypts sp:", sample_size$n_both)
 ```
 
+### Path records for clinical info extraction 
+for fe_si_papers/unsupervised - to validate llm extraction of clinical data
+Sensitivity - estimate 0.95 (based on classification gpt4o paper)
+
+
+```{r}
+#villi sensitivity
+sample_size <- sample_size_se(
+  confidence_interval_length = 0.07, 
+  alpha = 0.05, 
+  sensitivity_estimate = 0.95,
+  prevalence_estimate = 0.5)
+
+message("Sample size n:", sample_size$n_both)
+
+#
+```
+
+
+
 
 
